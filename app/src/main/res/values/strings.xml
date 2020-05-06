@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Urban Dictionary App</string>
+    <string name="query">Query</string>
+    <string name="search">Search</string>
+    <string name="name">Name</string>
+    <string name="thumbs_up">Thumbs Up: %d</string>
+    <string name="thumbs_down">Thumbs Down: %d</string>
+    <string name="definition">Definition: %s</string>
+    <string name="example">\"Example: %s\"</string>
+    <string name="sort_thumbs_up"><b>Sort:</b> Thumbs up</string>
+    <string name="sort_thumbs_down"><b>Sort:</b> Thumbs down</string>
+</resources>
