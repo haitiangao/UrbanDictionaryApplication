@@ -15,19 +15,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.urbandictionaryapp.R
 import com.example.urbandictionaryapp.adapter.DefinitionAdapter
 import com.example.urbandictionaryapp.model.Definition
-import com.example.urbandictionaryapp.repository.UrbanDictionaryRepository
-import com.example.urbandictionaryapp.util.Constants
-import com.example.urbandictionaryapp.util.DebugLogger
+import com.example.urbandictionaryapp.util.Constants.Companion.DEFINITION_KEY
+import com.example.urbandictionaryapp.util.SortingUtil.Companion.sortByThumbsDown
+import com.example.urbandictionaryapp.util.SortingUtil.Companion.sortByThumbsUp
 import com.example.urbandictionaryapp.viewmodel.UrbanDictionaryViewModel
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.home_search_activity_layout.*
-import java.util.*
 
+class HomeSearchActivity : AppCompatActivity(), DefinitionAdapter.UserClickListener {
 
-class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListener {
     private lateinit var viewModel: UrbanDictionaryViewModel
     private lateinit var definitionAdapter: DefinitionAdapter
-    private lateinit var listObserver: Observer<MutableList<Definition>>
+    private lateinit var listObserver: Observer<List<Definition>>
+    private var currentDefinitions: List<Definition> = mutableListOf()
 
     private val searchTextWatcher = object : TextWatcher {
         override fun afterTextChanged(editable: Editable) {
@@ -58,62 +57,55 @@ class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListen
         viewModel =
             ViewModelProvider(this).get<UrbanDictionaryViewModel>(UrbanDictionaryViewModel::class.java)
 
-
-        definitionAdapter = DefinitionAdapter(viewModel.getEntries(),this)
-        definition_recyclerView.adapter = definitionAdapter
-
         setUpRecyclerView()
 
         (word_editText as EditText).addTextChangedListener(searchTextWatcher)
-
-
-        mostThumbsUpButton.setOnClickListener {
-            if (viewModel.getEntries().size > 0) {
-                val sortedEntries = viewModel.getEntries().sortedWith(compareByDescending { it.thumbsUp })
-                setEntries(sortedEntries)
-            }
-        }
-
-        mostThumbsDownButton.setOnClickListener {
-            if (viewModel.getEntries().size > 0) {
-                val sortedEntries = viewModel.getEntries().sortedWith(compareByDescending { it.thumbsDown })
-                setEntries(sortedEntries)
-            }
-        }
-
-
-    }
-
-    private fun setUpRecyclerView() {
-        val itemDecoration =
-            DividerItemDecoration(this, RecyclerView.VERTICAL)
-        definition_recyclerView.layoutManager = LinearLayoutManager(this)
-        definition_recyclerView.adapter = DefinitionAdapter(viewModel.getEntries(), this)
-        definition_recyclerView.addItemDecoration(itemDecoration)
-    }
-
-    private fun setEntries(updatedEntries: List<Definition>) {
-        viewModel.setEntries(updatedEntries as MutableList<Definition>)
-        (definition_recyclerView.adapter as DefinitionAdapter).setEntries(updatedEntries)
-        (definition_recyclerView.adapter as DefinitionAdapter).notifyDataSetChanged()
-    }
-
-
-    fun doSearch(query: String) {
-        progressBar1.visibility = View.VISIBLE
 
         listObserver =
             Observer {
                 setEntries(it)
                 progressBar1.visibility = View.GONE
             }
+        viewModel.getDefinitionLiveData().observe(this, listObserver)
 
-        viewModel.getDefinitionList(query).observe(this,listObserver )
+        mostThumbsUpButton.setOnClickListener {
+            if (currentDefinitions.isNotEmpty()) {
+                setEntries(sortByThumbsUp(currentDefinitions))
+            }
+        }
+
+        mostThumbsDownButton.setOnClickListener {
+            if (currentDefinitions.isNotEmpty()) {
+                setEntries(sortByThumbsDown(currentDefinitions))
+            }
+        }
+    }
+
+    private fun setUpRecyclerView() {
+        val itemDecoration = DividerItemDecoration(this, RecyclerView.VERTICAL)
+
+        definitionAdapter = DefinitionAdapter(mutableListOf(), this)
+        definition_recyclerView.adapter = definitionAdapter
+
+        definition_recyclerView.layoutManager = LinearLayoutManager(this)
+        definition_recyclerView.addItemDecoration(itemDecoration)
+    }
+
+    private fun setEntries(foundDefinitions: List<Definition>) {
+        currentDefinitions = foundDefinitions
+        (definition_recyclerView.adapter as DefinitionAdapter).setEntries(foundDefinitions)
+        (definition_recyclerView.adapter as DefinitionAdapter).notifyDataSetChanged()
+    }
+
+
+    fun doSearch(query: String) {
+        progressBar1.visibility = View.VISIBLE
+        viewModel.searchForDefinitions(query)
     }
 
     override fun openDefinition(definition: Definition) {
         val openMovieIntent = Intent(this, DisplayDefinitionActivity::class.java)
-        openMovieIntent.putExtra(Constants.DEFINITION_KEY, definition)
+        openMovieIntent.putExtra(DEFINITION_KEY, definition)
         startActivity(openMovieIntent)
     }
 }

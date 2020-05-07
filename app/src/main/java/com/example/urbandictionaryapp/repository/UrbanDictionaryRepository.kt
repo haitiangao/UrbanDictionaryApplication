@@ -1,17 +1,21 @@
 package com.example.urbandictionaryapp.repository
 
-import android.app.Application
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import com.example.urbandictionaryapp.model.Definition
-import java.util.ArrayList
+import com.example.urbandictionaryapp.model.DefinitionResults
+import com.example.urbandictionaryapp.network.UrbanDictionaryRetrofitInstance
+import com.example.urbandictionaryapp.util.DebugLogger
+import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-class UrbanDictionaryRepository private constructor(){
+class UrbanDictionaryRepository private constructor() {
 
-    private var definitionLiveData: MutableLiveData<MutableList<Definition>> = MutableLiveData()
-    val dLiveData: LiveData<MutableList<Definition>> = definitionLiveData
-    private var entries: MutableList<Definition> = ArrayList()
+    private val urbanDictionaryRetrofitInstance: UrbanDictionaryRetrofitInstance =
+        UrbanDictionaryRetrofitInstance()
+
+    private val publishSubject: PublishSubject<List<Definition>> = PublishSubject.create()
 
 
     companion object {
@@ -27,17 +31,29 @@ class UrbanDictionaryRepository private constructor(){
         }
     }
 
-    fun getDefinitionLiveData(): MutableLiveData<MutableList<Definition>> {
-        return definitionLiveData
-    }
-    fun setDefinitionLiveData(definitionLiveData: MutableLiveData<MutableList<Definition>>){
-        this.definitionLiveData = definitionLiveData
-    }
-    fun getEntries(): MutableList<Definition> {
-        return entries
-    }
-    fun setEntries(entries: MutableList<Definition>){
-        this.entries = entries
+    fun getDefinitionList(query: String): Observable<List<Definition>> {
+        urbanDictionaryRetrofitInstance.getDefinitions(query)
+            .enqueue(object : Callback<DefinitionResults> {
+                override fun onResponse(
+                    call: Call<DefinitionResults>,
+                    response: Response<DefinitionResults>
+                ) {
+                    if (response.isSuccessful && response.body() != null) {
+                        response.body()?.let { definitionResults ->
+                            publishSubject.onNext(definitionResults.list)
+                        }
+                    }
+                }
+
+                override fun onFailure(
+                    call: Call<DefinitionResults>,
+                    t: Throwable
+                ) {
+                    DebugLogger.logError(t)
+                }
+            })
+
+        return publishSubject
     }
 
 

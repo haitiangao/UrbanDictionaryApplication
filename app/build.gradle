@@ -50,6 +50,7 @@ dependencies {
 
     testImplementation 'androidx.test:core:1.0.0'
     testImplementation "androidx.test.ext:junit-ktx:1.1.1"
+    testImplementation "androidx.arch.core:core-testing:2.1.0"
 
     androidTestImplementation 'androidx.test:runner:1.1.0'
     androidTestImplementation 'androidx.test:rules:1.1.0'
