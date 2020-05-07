@@ -2,7 +2,6 @@ package com.example.urbandictionaryapp
 
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,9 +18,8 @@ class InstrumentedTests {
     @get:Rule var mActivityTestRule: ActivityTestRule<HomeSearchActivity> = ActivityTestRule(HomeSearchActivity::class.java)
 
     @Test
-    fun SearchFindsContent(){
+    fun searchFindsContent(){
         onView(withId(R.id.word_editText)).perform(typeText("wat"))
-        onView(withId(R.id.searchButton)).perform(click())
         assert(getRVcount()>0)
 
     }

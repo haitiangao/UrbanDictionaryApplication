@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.urbandictionaryapp.R
 import com.example.urbandictionaryapp.adapter.DefinitionAdapter
 import com.example.urbandictionaryapp.model.Definition
+import com.example.urbandictionaryapp.repository.UrbanDictionaryRepository
 import com.example.urbandictionaryapp.util.Constants
 import com.example.urbandictionaryapp.util.DebugLogger
 import com.example.urbandictionaryapp.viewmodel.UrbanDictionaryViewModel
@@ -24,10 +26,8 @@ import java.util.*
 
 class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListener {
     private lateinit var viewModel: UrbanDictionaryViewModel
-    private var compositeDisposable: CompositeDisposable = CompositeDisposable()
-    private var entries: MutableList<Definition> = ArrayList<Definition>()
     private lateinit var definitionAdapter: DefinitionAdapter
-
+    private lateinit var listObserver: Observer<MutableList<Definition>>
 
     private val searchTextWatcher = object : TextWatcher {
         override fun afterTextChanged(editable: Editable) {
@@ -55,11 +55,12 @@ class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListen
         super.onCreate(savedInstanceState)
         setContentView(R.layout.home_search_activity_layout)
 
-        definitionAdapter = DefinitionAdapter(entries,this)
-        definition_recyclerView.adapter = definitionAdapter
-
         viewModel =
             ViewModelProvider(this).get<UrbanDictionaryViewModel>(UrbanDictionaryViewModel::class.java)
+
+
+        definitionAdapter = DefinitionAdapter(viewModel.getEntries(),this)
+        definition_recyclerView.adapter = definitionAdapter
 
         setUpRecyclerView()
 
@@ -67,15 +68,15 @@ class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListen
 
 
         mostThumbsUpButton.setOnClickListener {
-            if (entries.size > 0) {
-                val sortedEntries = entries.sortedWith(compareByDescending { it.thumbsUp })
+            if (viewModel.getEntries().size > 0) {
+                val sortedEntries = viewModel.getEntries().sortedWith(compareByDescending { it.thumbsUp })
                 setEntries(sortedEntries)
             }
         }
 
         mostThumbsDownButton.setOnClickListener {
-            if (entries.size > 0) {
-                val sortedEntries = entries.sortedWith(compareByDescending { it.thumbsDown })
+            if (viewModel.getEntries().size > 0) {
+                val sortedEntries = viewModel.getEntries().sortedWith(compareByDescending { it.thumbsDown })
                 setEntries(sortedEntries)
             }
         }
@@ -87,31 +88,27 @@ class HomeSearchActivity : AppCompatActivity(),DefinitionAdapter.UserClickListen
         val itemDecoration =
             DividerItemDecoration(this, RecyclerView.VERTICAL)
         definition_recyclerView.layoutManager = LinearLayoutManager(this)
-        definition_recyclerView.adapter = DefinitionAdapter(entries, this)
+        definition_recyclerView.adapter = DefinitionAdapter(viewModel.getEntries(), this)
         definition_recyclerView.addItemDecoration(itemDecoration)
     }
 
     private fun setEntries(updatedEntries: List<Definition>) {
-        entries = updatedEntries as MutableList<Definition>
+        viewModel.setEntries(updatedEntries as MutableList<Definition>)
         (definition_recyclerView.adapter as DefinitionAdapter).setEntries(updatedEntries)
         (definition_recyclerView.adapter as DefinitionAdapter).notifyDataSetChanged()
     }
 
 
-    private fun doSearch(query: String) {
-        progressBar1.visibility = View.VISIBLE;
-        compositeDisposable.add(viewModel.getDefinitionListRx(query).subscribe({ resultLibrary ->
-            setEntries(resultLibrary)
-            progressBar1.visibility = View.GONE
-            clearDisposable()
-        }, { throwable ->
-            DebugLogger.logError(throwable)
-            clearDisposable()
-        }))
-    }
+    fun doSearch(query: String) {
+        progressBar1.visibility = View.VISIBLE
 
-    private fun clearDisposable() {
-        compositeDisposable.clear()
+        listObserver =
+            Observer {
+                setEntries(it)
+                progressBar1.visibility = View.GONE
+            }
+
+        viewModel.getDefinitionList(query).observe(this,listObserver )
     }
 
     override fun openDefinition(definition: Definition) {

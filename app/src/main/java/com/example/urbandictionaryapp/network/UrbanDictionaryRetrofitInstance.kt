@@ -3,9 +3,9 @@ package com.example.urbandictionaryapp.network
 
 import com.example.urbandictionaryapp.model.DefinitionResults
 import com.example.urbandictionaryapp.util.Constants
-import io.reactivex.Observable
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -28,7 +28,7 @@ class UrbanDictionaryRetrofitInstance {
         return retrofitInstance.create(DictionaryService::class.java)
     }
 
-    fun getDefinitions(term: String): Observable<DefinitionResults> {
+    fun getDefinitions(term: String): Call<DefinitionResults> {
         return dictionaryService.getDefinition(term)
     }
 

@@ -37,7 +37,6 @@ class DefinitionAdapter(
 
     override fun getItemCount() = entries.size
 
-
     inner class DefinitionViewHolder(private val binding: DefinitionItemLayoutBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: Definition) {
