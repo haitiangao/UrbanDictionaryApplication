@@ -24,7 +24,7 @@ class UrbanDictionaryViewModel(application: Application) : AndroidViewModel(appl
 
     private val urbanDictionaryRetrofitInstance: UrbanDictionaryRetrofitInstance =
         UrbanDictionaryRetrofitInstance()
-    private val repository = UrbanDictionaryRepository()
+    private val repository = UrbanDictionaryRepository.getRepository()
 
 
     fun getEntries(): MutableList<Definition> {
@@ -33,6 +33,8 @@ class UrbanDictionaryViewModel(application: Application) : AndroidViewModel(appl
     fun setEntries(entries: MutableList<Definition>){
         repository.setEntries(entries)
     }
+
+
 
 
     fun getDefinitionList(query: String): MutableLiveData<MutableList<Definition>> {

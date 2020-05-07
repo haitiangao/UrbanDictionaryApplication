@@ -1,12 +1,13 @@
 package com.example.urbandictionaryapp.viewmodel
 
+import android.view.View
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Before
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.urbandictionaryapp.model.Definition
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert.*
+import com.example.urbandictionaryapp.repository.UrbanDictionaryRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -18,6 +19,7 @@ import org.mockito.MockitoAnnotations
 class UrbanDictionaryViewModelTest {
 
     private lateinit var testViewModel: UrbanDictionaryViewModel
+    private lateinit var testRepository: UrbanDictionaryRepository
 
     @Mock
     private lateinit var mockDefinition: Definition
@@ -25,6 +27,7 @@ class UrbanDictionaryViewModelTest {
     @Before
     fun setUp() {
         testViewModel = UrbanDictionaryViewModel(ApplicationProvider.getApplicationContext())
+        testRepository = UrbanDictionaryRepository.getRepository()
         MockitoAnnotations.initMocks(this)
     }
 
@@ -38,17 +41,6 @@ class UrbanDictionaryViewModelTest {
         assert(checkList[0].word=="wat")
     }
 
-    @Test
-    fun checkGetDefinitionListContainsItems(){
-        var testList :MutableList<Definition>
-        val testObserver:Observer<MutableList<Definition>> = Observer{
-            testList=it
-            assert(testList.size>0)
-        }
-
-        testViewModel.getDefinitionList("wat").observeForever(testObserver)
-
-    }
 
 
 }
